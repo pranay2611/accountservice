@@ -8,3 +8,9 @@ CREATE TABLE accounts (
     status VARCHAR(255) NOT NULL CHECK (status IN ('ACTIVE', 'FROZEN', 'CLOSED')),
     created_at TIMESTAMP NOT NULL
 );
+
+-- read-optimized projection from customer service
+CREATE TABLE IF NOT EXISTS customer_projection (
+    customer_id INT PRIMARY KEY,
+    name VARCHAR(255)
+);

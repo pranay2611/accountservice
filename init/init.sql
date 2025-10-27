@@ -15,6 +15,12 @@ CREATE TABLE IF NOT EXISTS accounts (
     created_at TIMESTAMP NOT NULL
 );
 
+-- read-optimized projection from customer service
+CREATE TABLE IF NOT EXISTS customer_projection (
+    customer_id INT PRIMARY KEY,
+    name VARCHAR(255)
+);
+
 COPY accounts(customer_id, account_number, account_type, balance, currency, status, created_at)
 FROM '/docker-entrypoint-initdb.d/data/accounts.csv'
 WITH (FORMAT csv, HEADER true);

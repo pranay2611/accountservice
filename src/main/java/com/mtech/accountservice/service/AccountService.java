@@ -7,8 +7,6 @@ import com.mtech.accountservice.entity.Currency;
 import com.mtech.accountservice.repository.AccountRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -38,8 +36,8 @@ public class AccountService {
     }
 
     @Transactional
-    public void closeAccount(String accountNumber) {
-        Optional<Account> accountOpt = accountRepository.findByAccountNumber(accountNumber);
+    public void closeAccount(Long id) {
+        Optional<Account> accountOpt = accountRepository.findById(id);
         if (accountOpt.isPresent()) {
             Account account = accountOpt.get();
             account.setStatus(AccountStatus.CLOSED);
@@ -47,42 +45,46 @@ public class AccountService {
         }
     }
 
-    public Account getAccountDetails(String accountNumber) {
-        return accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found with account number: " + accountNumber));
+    public Account getAccountDetails(Long id) {
+        return accountRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found with ID: " + id));
     }
 
-    public BigDecimal fetchBalance(String accountNumber) {
-        return accountRepository.findByAccountNumber(accountNumber)
+    public BigDecimal fetchBalance(Long id) {
+        return accountRepository.findById(id)
                 .map(Account::getBalance)
                 .orElseThrow(() -> new IllegalArgumentException("Account not found"));
     }
 
     @Transactional
-    public void updateBalance(String accountNumber, BigDecimal newBalance) {
-        Optional<Account> accountOpt = accountRepository.findByAccountNumber(accountNumber);
+    public void updateBalance(Long id, BigDecimal newBalance) {
+        Optional<Account> accountOpt = accountRepository.findById(id);
         if (accountOpt.isPresent()) {
             Account account = accountOpt.get();
             account.setBalance(newBalance);
             accountRepository.save(account);
         } else {
-            throw new IllegalArgumentException("Account not found with account number: " + accountNumber);
+            throw new IllegalArgumentException("Account not found with ID: " + id);
         }
     }
 
-    public AccountStatus getStatus(String accountNumber) {
-        Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found with account number: " + accountNumber));
+    public AccountStatus getStatus(Long id) {
+        Account account = accountRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found with ID: " + id));
         return account.getStatus();
     }
 
-    public void changeStatus(String accountNumber, AccountStatus status) {
-        Optional<Account> accountOpt = accountRepository.findByAccountNumber(accountNumber);
+    public void changeStatus(Long id, AccountStatus status) {
+        Optional<Account> accountOpt = accountRepository.findById(id);
         if (accountOpt.isPresent()) {
             Account account = accountOpt.get();
             account.setStatus(status);
             accountRepository.save(account);
         }
+    }
+
+    public Account saveAccount(Account account) {
+        return accountRepository.save(account);
     }
 
     private String generateAccountNumber() {
