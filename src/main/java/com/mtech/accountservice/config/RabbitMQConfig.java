@@ -7,12 +7,10 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
-import org.springframework.amqp.rabbit.listener.RabbitListenerContainerFactory;
-import org.springframework.amqp.support.converter.DefaultClassMapper;
-import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 @Configuration
 public class RabbitMQConfig {
@@ -23,8 +21,20 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue accountCreationQueue(@Value("${rabbitmq.account.creation.queue}") String queueName) {
+        return new Queue(queueName, true);
+    }
+
+    @Bean
+    public Queue accountUpdateQueue(@Value("${rabbitmq.account.update.queue}") String queueName) {
+        return new Queue(queueName, true);
+    }
+
+    @Bean
     public Jackson2JsonMessageConverter messageConverter() {
-        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter(objectMapper);
         converter.setDefaultCharset("UTF-8");
 
         DefaultJackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
@@ -52,4 +62,3 @@ public class RabbitMQConfig {
     }
 
 }
-

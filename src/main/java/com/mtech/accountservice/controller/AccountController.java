@@ -6,6 +6,10 @@ import com.mtech.accountservice.entity.AccountType;
 import com.mtech.accountservice.entity.Currency;
 import com.mtech.accountservice.service.AccountService;
 import com.mtech.accountservice.service.CustomerService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,12 +22,22 @@ import java.util.Map;
 @RequestMapping("/api/accounts")
 public class AccountController {
 
+    private static final Logger logger = LoggerFactory.getLogger(AccountController.class);
+
     private final AccountService accountService;
     private final CustomerService customerService;
+    private final RabbitTemplate rabbitTemplate;
 
-    public AccountController(AccountService accountService, CustomerService customerService) {
+    @Value("${rabbitmq.account.creation.queue}")
+    private String accountCreationQueue;
+
+    @Value("${rabbitmq.account.update.queue}")
+    private String accountUpdateQueue;
+
+    public AccountController(AccountService accountService, CustomerService customerService, RabbitTemplate rabbitTemplate) {
         this.accountService = accountService;
         this.customerService = customerService;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @PostMapping
@@ -37,6 +51,11 @@ public class AccountController {
         }
 
         Account account = accountService.createAccount(customerId, accountType, initialBalance, currency);
+
+        // Publish account creation event
+        rabbitTemplate.convertAndSend(accountCreationQueue, account);
+        logger.info("Publishing event to RabbitMQ. Exchange: {}, RoutingKey: {}, Payload: {}", "", accountCreationQueue, account);
+
         return ResponseEntity.ok(account);
     }
 
@@ -96,6 +115,11 @@ public class AccountController {
         }
 
         Account savedAccount = accountService.saveAccount(existingAccount);
+
+        // Publish account update event
+        rabbitTemplate.convertAndSend(accountUpdateQueue, savedAccount);
+        logger.info("Publishing event to RabbitMQ. Exchange: {}, RoutingKey: {}, Payload: {}", "", accountUpdateQueue, savedAccount);
+
         return ResponseEntity.ok(savedAccount);
     }
 }
