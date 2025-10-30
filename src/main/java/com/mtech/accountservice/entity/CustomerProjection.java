@@ -27,4 +27,20 @@ public class CustomerProjection implements Serializable {
     @Column(name = "name", nullable = false)
     @JsonProperty("name")
     private String name;
+
+    public Long getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }
