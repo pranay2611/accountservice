@@ -26,3 +26,4 @@ FROM '/docker-entrypoint-initdb.d/data/accounts.csv'
 WITH (FORMAT csv, HEADER true);
 
 ALTER TABLE accounts OWNER TO account;
+ALTER TABLE customer_projection OWNER TO account;

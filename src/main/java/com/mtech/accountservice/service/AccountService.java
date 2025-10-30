@@ -5,8 +5,10 @@ import com.mtech.accountservice.entity.AccountStatus;
 import com.mtech.accountservice.entity.AccountType;
 import com.mtech.accountservice.entity.Currency;
 import com.mtech.accountservice.repository.AccountRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -36,12 +38,15 @@ public class AccountService {
     }
 
     @Transactional
-    public void closeAccount(Long id) {
+    public Account closeAccount(Long id) {
         Optional<Account> accountOpt = accountRepository.findById(id);
         if (accountOpt.isPresent()) {
             Account account = accountOpt.get();
             account.setStatus(AccountStatus.CLOSED);
             accountRepository.save(account);
+            return account;
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account not found with ID: " + id);
         }
     }
 
@@ -57,14 +62,15 @@ public class AccountService {
     }
 
     @Transactional
-    public void updateBalance(Long id, BigDecimal newBalance) {
+    public Account updateBalance(Long id, BigDecimal newBalance) {
         Optional<Account> accountOpt = accountRepository.findById(id);
         if (accountOpt.isPresent()) {
             Account account = accountOpt.get();
             account.setBalance(newBalance);
             accountRepository.save(account);
+            return account;
         } else {
-            throw new IllegalArgumentException("Account not found with ID: " + id);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account not found with ID: " + id);
         }
     }
 
@@ -74,12 +80,15 @@ public class AccountService {
         return account.getStatus();
     }
 
-    public void changeStatus(Long id, AccountStatus status) {
+    public Account changeStatus(Long id, AccountStatus status) {
         Optional<Account> accountOpt = accountRepository.findById(id);
         if (accountOpt.isPresent()) {
             Account account = accountOpt.get();
             account.setStatus(status);
             accountRepository.save(account);
+            return account;
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Account not found with ID: " + id);
         }
     }
 

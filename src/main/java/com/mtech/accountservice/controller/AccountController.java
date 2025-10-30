@@ -41,16 +41,18 @@ public class AccountController {
     }
 
     @PostMapping
-    public ResponseEntity<Account> createAccount(@RequestParam Long customerId,
-                                                 @RequestParam AccountType accountType,
-                                                 @RequestParam BigDecimal initialBalance,
-                                                 @RequestParam Currency currency) {
+    public ResponseEntity<Account> createAccount(@RequestBody Account accountPayload) {
 
-        if (!customerService.isCustomerPresent(customerId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer not found with ID: " + customerId);
+        if (!customerService.isCustomerPresent(accountPayload.getCustomerId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Customer not found with ID: " + accountPayload.getCustomerId());
         }
 
-        Account account = accountService.createAccount(customerId, accountType, initialBalance, currency);
+        Account account = accountService.createAccount(
+                accountPayload.getCustomerId(),
+                accountPayload.getAccountType(),
+                accountPayload.getBalance(),
+                accountPayload.getCurrency()
+        );
 
         // Publish account creation event
         rabbitTemplate.convertAndSend(accountCreationQueue, account);
@@ -67,7 +69,11 @@ public class AccountController {
 
     @PostMapping("/{id}/close")
     public ResponseEntity<Void> closeAccount(@PathVariable Long id) {
-        accountService.closeAccount(id);
+        Account account = accountService.closeAccount(id);
+
+        // Publish account update event
+        rabbitTemplate.convertAndSend(accountUpdateQueue, account);
+        logger.info("Publishing event to RabbitMQ. Exchange: {}, RoutingKey: {}, Payload: {}", "", accountUpdateQueue, account);
         return ResponseEntity.ok().build();
     }
 
@@ -80,7 +86,11 @@ public class AccountController {
 
     @PatchMapping("/{id}/balance")
     public ResponseEntity<Void> updateBalance(@PathVariable Long id, @RequestParam BigDecimal newBalance) {
-        accountService.updateBalance(id, newBalance);
+        Account account = accountService.updateBalance(id, newBalance);
+
+        // Publish account update event
+        rabbitTemplate.convertAndSend(accountUpdateQueue, account);
+        logger.info("Publishing event to RabbitMQ. Exchange: {}, RoutingKey: {}, Payload: {}", "", accountUpdateQueue, account);
         return ResponseEntity.ok().build();
     }
 
@@ -93,7 +103,12 @@ public class AccountController {
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<Void> changeStatus(@PathVariable Long id, @RequestParam String status) {
-        accountService.changeStatus(id, AccountStatus.fromString(status));
+        Account account = accountService.changeStatus(id, AccountStatus.fromString(status));
+
+        // Publish account update event
+        rabbitTemplate.convertAndSend(accountUpdateQueue, account);
+        logger.info("Publishing event to RabbitMQ. Exchange: {}, RoutingKey: {}, Payload: {}", "", accountUpdateQueue, account);
+
         return ResponseEntity.ok().build();
     }
 

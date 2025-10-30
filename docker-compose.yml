@@ -31,8 +31,11 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/accounts
       SPRING_DATASOURCE_USERNAME: account
       SPRING_DATASOURCE_PASSWORD: account
+      SPRING_PROFILES_ACTIVE: dev
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006"
     ports:
-      - "8081:8081"
+      - "8081:8081" # Application port
+      - "5006:5006" # Debug port
     networks:
       - app-network
     command: >
